@@ -1,0 +1,29 @@
+image: openjdk:17
+
+definitions:
+  caches:
+    gradlewrapper: ~/.gradle/wrapper
+  steps:
+    - step: &lint
+        name: Lint
+        caches:
+          - gradle
+          - gradlewrapper
+        script:
+          - bash ./gradlew lintKotlin
+    - step: &publish
+        name: Publish
+        caches:
+          - gradle
+          - gradlewrapper
+        script:
+          - bash ./gradlew publish
+
+pipelines:
+  pull-requests:
+    "**":
+      - step: *lint
+  branches:
+    master:
+      - step: *lint
+      - step: *publish

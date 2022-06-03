@@ -15,7 +15,7 @@ open class AuditableEntity<T>(
     @CreatedBy
     open val createdBy: String? = null,
     @LastModifiedDate
-    open val modifiedDate: Instant? = null,
+    open val updatedDate: Instant? = null,
     @LastModifiedBy
-    open val modifiedBy: String? = null
+    open val updatedBy: String? = null
 )

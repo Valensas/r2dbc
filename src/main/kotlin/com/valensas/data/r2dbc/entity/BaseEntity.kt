@@ -1,12 +1,15 @@
-package com.valensas.common.auditing.entity
+package com.valensas.data.r2dbc.entity
 
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.LastModifiedDate
 import java.time.Instant
 
 open class BaseEntity<T>(
     @Id
     open val id: T? = null,
     @CreatedDate
-    open val createdDate: Instant? = null
+    open val createdDate: Instant? = null,
+    @LastModifiedDate
+    open val updatedDate: Instant? = null
 )

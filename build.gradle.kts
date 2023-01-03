@@ -1,17 +1,17 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.7.0"
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    id("org.jmailen.kotlinter") version "3.7.0"
+    id("org.springframework.boot") version "3.0.1"
+    id("io.spring.dependency-management") version "1.1.0"
+    id("org.jmailen.kotlinter") version "3.13.0"
     id("maven-publish")
     id("java-library")
-    kotlin("jvm") version "1.6.21"
-    kotlin("plugin.spring") version "1.6.21"
+    kotlin("jvm") version "1.7.22"
+    kotlin("plugin.spring") version "1.7.22"
 }
 
-group = "com.valensas.common"
-version = "1.0.1"
+group = "com.valensas.data"
+version = "1.0.0"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
@@ -29,11 +29,16 @@ repositories {
 
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    api("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    api("org.postgresql:postgresql")
+    api("org.postgresql:r2dbc-postgresql")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    compileOnly("org.springframework.security:spring-security-oauth2-core")
 }
 
 tasks.withType<KotlinCompile> {

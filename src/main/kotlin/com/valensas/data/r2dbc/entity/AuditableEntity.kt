@@ -1,4 +1,4 @@
-package com.valensas.common.auditing.entity
+package com.valensas.data.r2dbc.entity
 
 import org.springframework.data.annotation.CreatedBy
 import org.springframework.data.annotation.CreatedDate

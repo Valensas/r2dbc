@@ -7,6 +7,7 @@ import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
+import io.r2dbc.postgresql.client.SSLMode
 import io.r2dbc.postgresql.codec.EnumCodec
 import io.r2dbc.postgresql.codec.Json
 import io.r2dbc.postgresql.extension.CodecRegistrar
@@ -42,6 +43,13 @@ class DatabaseAutoConfiguration(
         val host = options.getValue(Option.valueOf<String>("host")) as String
         val port = options.getValue(Option.valueOf<String>("port")) as Int
         val database = options.getValue(Option.valueOf<String>("database")) as String
+        val preparedStatementCacheQueries = options.getValue(Option.valueOf<String>("preparedStatementCacheQueries")) as String?
+        val sslMode = options.getValue(Option.valueOf<String>("sslMode")) as String?
+        val socket = options.getValue(Option.valueOf<String>("socket")) as String?
+        val applicationName = options.getValue(Option.valueOf<String>("applicationName")) as String?
+        val autodetectExtensions = options.getValue(Option.valueOf<String>("autodetectExtensions")) as String?
+        val tcpKeepAlive = options.getValue(Option.valueOf<String>("tcpKeepAlive")) as String?
+        val tcpNoDelay = options.getValue(Option.valueOf<String>("tcpNoDelay")) as String?
 
         var builder = PostgresqlConnectionConfiguration.builder()
             .database(database)
@@ -49,7 +57,14 @@ class DatabaseAutoConfiguration(
             .password(prop.password)
             .host(host)
             .port(port)
-            .preparedStatementCacheQueries(0)
+
+        preparedStatementCacheQueries?.let { builder = builder.preparedStatementCacheQueries(it.toInt()) }
+        sslMode?.let { builder = builder.sslMode(SSLMode.valueOf(it)) }
+        socket?.let { builder = builder.socket(it) }
+        applicationName?.let { builder = builder.applicationName(it) }
+        autodetectExtensions?.let { builder = builder.autodetectExtensions(it.toBoolean()) }
+        tcpKeepAlive?.let { builder = builder.tcpKeepAlive(it.toBoolean()) }
+        tcpNoDelay?.let { builder = builder.tcpNoDelay(it.toBoolean()) }
 
         findFieldsWithAnnotation<PgEnum>().forEach { (type, annotation) ->
             val enumClass = ClassLoader.getSystemClassLoader().loadClass(type)

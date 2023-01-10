@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.valensas.data"
-version = "1.1.0"
+version = "1.1.1"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
@@ -30,7 +30,6 @@ repositories {
 
 dependencies {
     api("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    api("org.postgresql:postgresql")
     api("org.postgresql:r2dbc-postgresql")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

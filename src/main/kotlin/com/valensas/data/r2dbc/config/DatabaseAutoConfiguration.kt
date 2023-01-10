@@ -1,11 +1,14 @@
 package com.valensas.data.r2dbc.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.data.r2dbc.annotation.PgEnum
+import com.valensas.data.r2dbc.annotation.PgJson
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.postgresql.codec.EnumCodec
+import io.r2dbc.postgresql.codec.Json
 import io.r2dbc.postgresql.extension.CodecRegistrar
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
@@ -21,6 +24,7 @@ import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.GenericConverter
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair
 import org.springframework.core.type.filter.AnnotationTypeFilter
+import org.springframework.data.convert.ReadingConverter
 import org.springframework.data.convert.WritingConverter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.relational.core.mapping.Table
@@ -29,7 +33,8 @@ import org.springframework.data.relational.core.mapping.Table
 @EnableConfigurationProperties(R2dbcProperties::class)
 class DatabaseAutoConfiguration(
     private val prop: R2dbcProperties,
-    private val context: ApplicationContext
+    private val context: ApplicationContext,
+    private val objectMapper: ObjectMapper
 ) : AbstractR2dbcConfiguration() {
     @Bean
     override fun connectionFactory(): ConnectionFactory {
@@ -46,7 +51,7 @@ class DatabaseAutoConfiguration(
             .port(port)
             .preparedStatementCacheQueries(0)
 
-        findFieldsWithPgEnumAnnotation().forEach { (type, annotation) ->
+        findFieldsWithAnnotation<PgEnum>().forEach { (type, annotation) ->
             val enumClass = ClassLoader.getSystemClassLoader().loadClass(type)
             if (!enumClass.isEnum) return@forEach
             val registrar = buildCodecRegistrar(annotation.name, enumClass as Class<out Enum<*>>)
@@ -73,14 +78,12 @@ class DatabaseAutoConfiguration(
 
     @Bean
     override fun getCustomConverters(): List<GenericConverter> {
-        return findFieldsWithPgEnumAnnotation().map { (type, _) ->
+        val enumConverters = findFieldsWithAnnotation<PgEnum>().map { (type, _) ->
             @WritingConverter
             class CustomPostgresEnumConverter : GenericConverter {
                 override fun getConvertibleTypes(): Set<ConvertiblePair> {
                     val enumClass = ClassLoader.getSystemClassLoader().loadClass(type)
-                    return setOf(
-                        ConvertiblePair(enumClass, enumClass)
-                    )
+                    return setOf(ConvertiblePair(enumClass, enumClass))
                 }
 
                 override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
@@ -91,6 +94,36 @@ class DatabaseAutoConfiguration(
             val converter = CustomPostgresEnumConverter()
             converter
         }
+
+        val jsonConverters = findFieldsWithAnnotation<PgJson>().map { (type, _) ->
+            @WritingConverter
+            class CustomPostgresJsonWritingConverter : GenericConverter {
+                override fun getConvertibleTypes(): Set<ConvertiblePair> {
+                    val targetClass = ClassLoader.getSystemClassLoader().loadClass(type)
+                    return setOf(ConvertiblePair(targetClass, Json::class.java))
+                }
+
+                override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
+                    return source?.let { Json.of(objectMapper.writeValueAsString(it)) }
+                }
+            }
+
+            @ReadingConverter
+            class CustomPostgresJsonReadingConverter : GenericConverter {
+                override fun getConvertibleTypes(): Set<ConvertiblePair> {
+                    val targetClass = ClassLoader.getSystemClassLoader().loadClass(type)
+                    return setOf(ConvertiblePair(Json::class.java, targetClass))
+                }
+
+                override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
+                    return objectMapper.readValue((source as Json).asArray(), targetType.type)
+                }
+            }
+
+            listOf(CustomPostgresJsonWritingConverter(), CustomPostgresJsonReadingConverter())
+        }.flatten()
+
+        return enumConverters + jsonConverters
     }
 
     private fun findProjectPackage(): List<String> {
@@ -98,7 +131,7 @@ class DatabaseAutoConfiguration(
         return candidates.map { it.value::class.java.packageName }
     }
 
-    private fun findFieldsWithPgEnumAnnotation(): List<Pair<String, PgEnum>> {
+    private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<String, T>> {
         val packages = findProjectPackage()
 
         val scanner = ClassPathScanningCandidateComponentProvider(false)
@@ -108,7 +141,7 @@ class DatabaseAutoConfiguration(
         return tables.flatMap {
             val entityClass = ClassLoader.getSystemClassLoader().loadClass(it.beanClassName)
             entityClass.declaredFields.mapNotNull { field ->
-                val annotation = field.getDeclaredAnnotation(PgEnum::class.java) ?: return@mapNotNull null
+                val annotation = field.getDeclaredAnnotation(T::class.java) ?: return@mapNotNull null
                 field.type.name to annotation
             }
         }

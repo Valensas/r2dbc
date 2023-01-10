@@ -57,8 +57,8 @@ publishing {
         maven {
             this.url = uri(project.property("AWS_REPO_URL").toString())
             credentials(AwsCredentials::class) {
-                this.accessKey = project.property("AWS_REPO_USER_ACCESS_KEY").toString()
-                this.secretKey = project.property("AWS_REPO_USER_SECRET_KEY").toString()
+                this.accessKey = project.property("AWS_REPO_ADMIN_ACCESS_KEY").toString()
+                this.secretKey = project.property("AWS_REPO_ADMIN_SECRET_KEY").toString()
             }
         }
     }

@@ -66,8 +66,7 @@ class DatabaseAutoConfiguration(
         tcpKeepAlive?.let { builder = builder.tcpKeepAlive(it.toBoolean()) }
         tcpNoDelay?.let { builder = builder.tcpNoDelay(it.toBoolean()) }
 
-        findFieldsWithAnnotation<PgEnum>().forEach { (type, annotation) ->
-            val enumClass = ClassLoader.getSystemClassLoader().loadClass(type)
+        findFieldsWithAnnotation<PgEnum>().forEach { (enumClass, annotation) ->
             if (!enumClass.isEnum) return@forEach
             val registrar = buildCodecRegistrar(annotation.name, enumClass as Class<out Enum<*>>)
             builder = builder.codecRegistrar(registrar)
@@ -97,8 +96,7 @@ class DatabaseAutoConfiguration(
             @WritingConverter
             class CustomPostgresEnumConverter : GenericConverter {
                 override fun getConvertibleTypes(): Set<ConvertiblePair> {
-                    val enumClass = ClassLoader.getSystemClassLoader().loadClass(type)
-                    return setOf(ConvertiblePair(enumClass, enumClass))
+                    return setOf(ConvertiblePair(type, type))
                 }
 
                 override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
@@ -114,8 +112,7 @@ class DatabaseAutoConfiguration(
             @WritingConverter
             class CustomPostgresJsonWritingConverter : GenericConverter {
                 override fun getConvertibleTypes(): Set<ConvertiblePair> {
-                    val targetClass = ClassLoader.getSystemClassLoader().loadClass(type)
-                    return setOf(ConvertiblePair(targetClass, Json::class.java))
+                    return setOf(ConvertiblePair(type, Json::class.java))
                 }
 
                 override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
@@ -126,8 +123,7 @@ class DatabaseAutoConfiguration(
             @ReadingConverter
             class CustomPostgresJsonReadingConverter : GenericConverter {
                 override fun getConvertibleTypes(): Set<ConvertiblePair> {
-                    val targetClass = ClassLoader.getSystemClassLoader().loadClass(type)
-                    return setOf(ConvertiblePair(Json::class.java, targetClass))
+                    return setOf(ConvertiblePair(Json::class.java, type))
                 }
 
                 override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
@@ -146,7 +142,7 @@ class DatabaseAutoConfiguration(
         return candidates.map { it.value::class.java.packageName }
     }
 
-    private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<String, T>> {
+    private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<Class<*>, T>> {
         val packages = findProjectPackage()
 
         val scanner = ClassPathScanningCandidateComponentProvider(false)
@@ -154,10 +150,10 @@ class DatabaseAutoConfiguration(
         val tables = packages.flatMap { scanner.findCandidateComponents(it) }
 
         return tables.flatMap {
-            val entityClass = ClassLoader.getSystemClassLoader().loadClass(it.beanClassName)
+            val entityClass = context.classLoader!!.loadClass(it.beanClassName)
             entityClass.declaredFields.mapNotNull { field ->
                 val annotation = field.getDeclaredAnnotation(T::class.java) ?: return@mapNotNull null
-                field.type.name to annotation
+                field.type to annotation
             }
         }
     }

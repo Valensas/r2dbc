@@ -14,6 +14,7 @@ import io.r2dbc.postgresql.extension.CodecRegistrar
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
 import io.r2dbc.spi.Option
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.r2dbc.R2dbcProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -28,15 +29,19 @@ import org.springframework.core.type.filter.AnnotationTypeFilter
 import org.springframework.data.convert.ReadingConverter
 import org.springframework.data.convert.WritingConverter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
 import org.springframework.data.relational.core.mapping.Table
 
 @Configuration
+@EnableR2dbcRepositories
 @EnableConfigurationProperties(R2dbcProperties::class)
 class DatabaseAutoConfiguration(
     private val prop: R2dbcProperties,
     private val context: ApplicationContext,
     private val objectMapper: ObjectMapper
 ) : AbstractR2dbcConfiguration() {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @Bean
     override fun connectionFactory(): ConnectionFactory {
         val options = ConnectionFactoryOptions.parse(prop.url)
@@ -74,18 +79,22 @@ class DatabaseAutoConfiguration(
 
         val postgresConnection = PostgresqlConnectionFactory(builder.build())
         return if (prop.pool.isEnabled) {
+            val minIdle = prop.properties["minIdle"]?.toIntOrNull() ?: prop.pool.initialSize
             val poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(postgresConnection)
                 .initialSize(prop.pool.initialSize)
+                .minIdle(minIdle)
                 .maxSize(prop.pool.maxSize)
                 .maxAcquireTime(prop.pool.maxAcquireTime)
                 .maxIdleTime(prop.pool.maxIdleTime)
                 .maxLifeTime(prop.pool.maxLifeTime)
                 .maxCreateConnectionTime(prop.pool.maxCreateConnectionTime)
                 .validationDepth(prop.pool.validationDepth)
-                .build()
-            ConnectionPool(poolConfig)
+
+            logger.info("Initializing database pool config {}", poolConfig)
+            ConnectionPool(poolConfig.build())
         } else {
+            logger.info("Initializing database config {}", builder.build())
             postgresConnection
         }
     }

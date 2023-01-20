@@ -79,11 +79,9 @@ class DatabaseAutoConfiguration(
 
         val postgresConnection = PostgresqlConnectionFactory(builder.build())
         return if (prop.pool.isEnabled) {
-            val minIdle = prop.properties["minIdle"]?.toIntOrNull() ?: prop.pool.initialSize
             val poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(postgresConnection)
                 .initialSize(prop.pool.initialSize)
-                .minIdle(minIdle)
                 .maxSize(prop.pool.maxSize)
                 .maxAcquireTime(prop.pool.maxAcquireTime)
                 .maxIdleTime(prop.pool.maxIdleTime)

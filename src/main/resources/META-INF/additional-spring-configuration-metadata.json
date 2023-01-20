@@ -1,0 +1,17 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "spring.r2dbc.pool.warmup.fixedDelay",
+      "description": "The millisecond value of the time between connection pool warmup jobs.",
+      "type": "java.lang.Integer",
+      "defaultValue": 300000
+    },
+    {
+      "name": "spring.r2dbc.pool.warmup.initialDelay",
+      "description": "The millisecond value of the time between service is up and the connection pool warmup starts.",
+      "type": "java.lang.Integer",
+      "defaultValue": 600000
+    }
+  ]
+}

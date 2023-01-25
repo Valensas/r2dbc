@@ -3,6 +3,8 @@ package com.valensas.data.r2dbc.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.data.r2dbc.annotation.PgEnum
 import com.valensas.data.r2dbc.annotation.PgJson
+import com.valensas.data.r2dbc.converter.DurationToIntervalConverter
+import com.valensas.data.r2dbc.converter.IntervalToDurationConverter
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
@@ -141,7 +143,7 @@ class DatabaseAutoConfiguration(
             listOf(CustomPostgresJsonWritingConverter(), CustomPostgresJsonReadingConverter())
         }.flatten()
 
-        return enumConverters + jsonConverters
+        return enumConverters + jsonConverters + DurationToIntervalConverter() + IntervalToDurationConverter()
     }
 
     private fun findProjectPackage(): List<String> {

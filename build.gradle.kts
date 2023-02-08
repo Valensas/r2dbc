@@ -11,20 +11,11 @@ plugins {
 }
 
 group = "com.valensas.data"
-version = "1.9.0"
+version = "1.10.0"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
-    if (project.hasProperty("AWS_REPO_URL")) {
-        maven {
-            this.url = uri(project.property("AWS_REPO_URL").toString())
-            credentials(AwsCredentials::class) {
-                this.accessKey = project.property("AWS_REPO_ADMIN_ACCESS_KEY").toString()
-                this.secretKey = project.property("AWS_REPO_ADMIN_SECRET_KEY").toString()
-            }
-        }
-    }
 }
 
 
@@ -53,11 +44,17 @@ tasks.withType<Test> {
 
 publishing {
     repositories {
-        maven {
-            this.url = uri(project.property("AWS_REPO_URL").toString())
-            credentials(AwsCredentials::class) {
-                this.accessKey = project.property("AWS_REPO_ADMIN_ACCESS_KEY").toString()
-                this.secretKey = project.property("AWS_REPO_ADMIN_SECRET_KEY").toString()
+        if (System.getenv("CI_API_V4_URL") != null) {
+            maven {
+                name = "Gitlab"
+                url = uri("${System.getenv("CI_API_V4_URL")}/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
+                credentials(HttpHeaderCredentials::class.java) {
+                    name = "Job-Token"
+                    value = System.getenv("CI_JOB_TOKEN")
+                }
+                authentication {
+                    create("header", HttpHeaderAuthentication::class)
+                }
             }
         }
     }

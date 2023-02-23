@@ -13,6 +13,11 @@ class IntervalToDurationConverter : GenericConverter {
     }
 
     override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any {
-        return (source as Interval).duration
+        val days = (source as Interval).years * 365 + (source.months * 30) + (source.days)
+
+        return Duration.ofDays(days.toLong())
+            .plusHours(source.hours.toLong())
+            .plusMinutes(source.minutes.toLong())
+            .plusNanos((source.seconds * 1000000000L).toLong())
     }
 }

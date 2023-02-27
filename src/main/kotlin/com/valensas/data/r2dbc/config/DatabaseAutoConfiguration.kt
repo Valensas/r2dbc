@@ -3,6 +3,9 @@ package com.valensas.data.r2dbc.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.data.r2dbc.annotation.PgEnum
 import com.valensas.data.r2dbc.annotation.PgJson
+import com.valensas.data.r2dbc.converter.CustomPostgresEnumConverter
+import com.valensas.data.r2dbc.converter.CustomPostgresJsonReadingConverter
+import com.valensas.data.r2dbc.converter.CustomPostgresJsonWritingConverter
 import com.valensas.data.r2dbc.converter.DurationToIntervalConverter
 import com.valensas.data.r2dbc.converter.IntervalToDurationConverter
 import io.r2dbc.pool.ConnectionPool
@@ -11,7 +14,6 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import io.r2dbc.postgresql.client.SSLMode
 import io.r2dbc.postgresql.codec.EnumCodec
-import io.r2dbc.postgresql.codec.Json
 import io.r2dbc.postgresql.extension.CodecRegistrar
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
@@ -24,15 +26,14 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.GenericConverter
-import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair
 import org.springframework.core.type.filter.AnnotationTypeFilter
-import org.springframework.data.convert.ReadingConverter
-import org.springframework.data.convert.WritingConverter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
 import org.springframework.data.relational.core.mapping.Table
+import java.lang.IllegalStateException
+import java.lang.reflect.Field
+import java.lang.reflect.ParameterizedType
 
 @Configuration
 @EnableR2dbcRepositories
@@ -73,9 +74,8 @@ class DatabaseAutoConfiguration(
         tcpKeepAlive?.let { builder = builder.tcpKeepAlive(it.toBoolean()) }
         tcpNoDelay?.let { builder = builder.tcpNoDelay(it.toBoolean()) }
 
-        findFieldsWithAnnotation<PgEnum>().forEach { (enumClass, annotation) ->
-            if (!enumClass.isEnum) return@forEach
-            val registrar = buildCodecRegistrar(annotation.name, enumClass as Class<out Enum<*>>)
+        findFieldsWithAnnotation<PgEnum>().forEach { (field, annotation) ->
+            val registrar = buildCodecRegistrar(annotation.name, field.baseType() as Class<out Enum<*>>)
             builder = builder.codecRegistrar(registrar)
         }
 
@@ -101,46 +101,14 @@ class DatabaseAutoConfiguration(
 
     @Bean
     override fun getCustomConverters(): List<GenericConverter> {
-        val enumConverters = findFieldsWithAnnotation<PgEnum>().map { (type, _) ->
-            @WritingConverter
-            class CustomPostgresEnumConverter : GenericConverter {
-                override fun getConvertibleTypes(): Set<ConvertiblePair> {
-                    return setOf(ConvertiblePair(type, type))
-                }
-
-                override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
-                    return source
-                }
-            }
-
-            val converter = CustomPostgresEnumConverter()
-            converter
+        val enumConverters = findFieldsWithAnnotation<PgEnum>().map { (field, _) ->
+            CustomPostgresEnumConverter(field.baseType())
         }
-
-        val jsonConverters = findFieldsWithAnnotation<PgJson>().map { (type, _) ->
-            @WritingConverter
-            class CustomPostgresJsonWritingConverter : GenericConverter {
-                override fun getConvertibleTypes(): Set<ConvertiblePair> {
-                    return setOf(ConvertiblePair(type, Json::class.java))
-                }
-
-                override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
-                    return source?.let { Json.of(objectMapper.writeValueAsString(it)) }
-                }
-            }
-
-            @ReadingConverter
-            class CustomPostgresJsonReadingConverter : GenericConverter {
-                override fun getConvertibleTypes(): Set<ConvertiblePair> {
-                    return setOf(ConvertiblePair(Json::class.java, type))
-                }
-
-                override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any? {
-                    return objectMapper.readValue((source as Json).asArray(), targetType.type)
-                }
-            }
-
-            listOf(CustomPostgresJsonWritingConverter(), CustomPostgresJsonReadingConverter())
+        val jsonConverters = findFieldsWithAnnotation<PgJson>().map { (field, _) ->
+            listOf(
+                CustomPostgresJsonWritingConverter(field.type, objectMapper),
+                CustomPostgresJsonReadingConverter(field, objectMapper)
+            )
         }.flatten()
 
         return enumConverters + jsonConverters + DurationToIntervalConverter() + IntervalToDurationConverter()
@@ -151,7 +119,7 @@ class DatabaseAutoConfiguration(
         return candidates.map { it.value::class.java.packageName }
     }
 
-    private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<Class<*>, T>> {
+    private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<Field, T>> {
         val packages = findProjectPackage()
 
         val scanner = ClassPathScanningCandidateComponentProvider(false)
@@ -162,8 +130,31 @@ class DatabaseAutoConfiguration(
             val entityClass = context.classLoader!!.loadClass(it.beanClassName)
             entityClass.declaredFields.mapNotNull { field ->
                 val annotation = field.getDeclaredAnnotation(T::class.java) ?: return@mapNotNull null
-                field.type to annotation
+                field to annotation
             }
+        }
+    }
+
+    private fun Field.isCollection(): Boolean {
+        return Collection::class.java.isAssignableFrom(this.type)
+    }
+
+    private fun Field.elementType(): Class<*> {
+        return when (val type = this.genericType) {
+            is Class<*> -> type.componentType
+            is ParameterizedType -> {
+                check(type.actualTypeArguments.count() == 1) { "Invalid actualTypeArguments count" }
+                type.actualTypeArguments.first() as Class<*>
+            }
+            else -> throw IllegalStateException("Unhandled entity class $type")
+        }
+    }
+
+    private fun Field.baseType(): Class<*> {
+        return if (this.isCollection()) {
+            this.elementType()
+        } else {
+            this.type
         }
     }
 

@@ -1,4 +1,4 @@
-image: openjdk:17-slim
+image: registry.gitlab.com/valensas/tooling/containers/graalvm-static-image:java17-22.3.1
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -15,8 +15,30 @@ lint:
   stage: verify
   cache:
     paths:
-    - .gradle
+      - .gradle
+  variables:
+    KUBERNETES_CPU_REQUEST: "1"
+    KUBERNETES_CPU_LIMIT: "1"
+    KUBERNETES_MEMORY_REQUEST: "2Gi"
+    KUBERNETES_MEMORY_LIMIT: "2Gi"
   script: ./gradlew lintKotlin
+
+test:
+  stage: verify
+  cache:
+    paths:
+      - .gradle
+  services:
+    - bitnami/postgresql:15.2.0
+  variables:
+    KUBERNETES_CPU_REQUEST: "2"
+    KUBERNETES_CPU_LIMIT: "2"
+    KUBERNETES_MEMORY_REQUEST: "8Gi"
+    KUBERNETES_MEMORY_LIMIT: "8Gi"
+    POSTGRES_DB: "r2dbc_test"
+    POSTGRES_USER: "db_user"
+    POSTGRES_PASSWORD: "db_pass"
+  script: ./gradlew nativeTest
 
 publish:
   stage: publish

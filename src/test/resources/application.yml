@@ -1,0 +1,17 @@
+spring:
+  application.name: block
+  jackson.time-zone: Europe/Istanbul
+  r2dbc:
+    username: db_user
+    password: db_pass
+    url: r2dbc:postgresql://localhost:5432/r2dbc_test?preparedStatementCacheQueries=0
+  flyway:
+    user: db_user
+    password: db_pass
+    url: jdbc:postgresql://localhost:5432/r2dbc_test
+    baselineOnMigrate: true
+    table: flyway_r2dbc_test_schema_history
+logging:
+  level:
+    io.r2dbc.postgresql.QUERY: DEBUG # for queries
+    io.r2dbc.postgresql.PARAM: DEBUG # for parameters

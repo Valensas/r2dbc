@@ -1,13 +1,16 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "3.0.2"
+    id("org.springframework.boot") version "3.0.3"
     id("io.spring.dependency-management") version "1.1.0"
     id("org.jmailen.kotlinter") version "3.13.0"
     id("maven-publish")
     id("java-library")
     kotlin("jvm") version "1.7.22"
     kotlin("plugin.spring") version "1.7.22"
+
+    id("org.graalvm.buildtools.native") version "0.9.20"
+    id("com.github.ben-manes.versions") version "0.46.0"
 }
 
 group = "com.valensas.data"
@@ -16,8 +19,21 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
+    if (project.hasProperty("GITLAB_REPO_URL")) {
+        maven {
+            name = "Gitlab"
+            url = uri(project.property("GITLAB_REPO_URL").toString())
+            credentials(HttpHeaderCredentials::class.java) {
+                name = project.findProperty("GITLAB_TOKEN_NAME")?.toString()
+                value = project.findProperty("GITLAB_TOKEN")?.toString()
+            }
+            authentication {
+                create("header", HttpHeaderAuthentication::class)
+            }
+        }
+    }
+    mavenLocal()
 }
-
 
 dependencies {
     api("org.springframework.boot:spring-boot-starter-data-r2dbc")
@@ -28,7 +44,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+
     compileOnly("org.springframework.security:spring-security-oauth2-core")
+
+    testImplementation("org.flywaydb:flyway-core")
+    testRuntimeOnly("org.postgresql:postgresql")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 tasks.withType<KotlinCompile> {
@@ -64,4 +85,12 @@ publishing {
             from(components["java"])
         }
     }
+}
+
+tasks.formatKotlin {
+    setDependsOn(dependsOn - tasks.formatKotlinAot - tasks.formatKotlinAotTest)
+}
+
+tasks.lintKotlin {
+    setDependsOn(dependsOn - tasks.lintKotlinAot -  tasks.lintKotlinAotTest)
 }

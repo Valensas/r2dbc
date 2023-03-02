@@ -1,0 +1,8 @@
+[
+  {
+    "name": "java.time.OffsetDateTime",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  }
+]

@@ -19,25 +19,26 @@ import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryOptions
 import io.r2dbc.spi.Option
 import org.slf4j.LoggerFactory
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.r2dbc.R2dbcProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.GenericConverter
-import org.springframework.core.type.filter.AnnotationTypeFilter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
-import org.springframework.data.relational.core.mapping.Table
-import java.lang.IllegalStateException
 import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
 
 @Configuration
 @EnableR2dbcRepositories
 @EnableConfigurationProperties(R2dbcProperties::class)
+@RegisterReflectionForBinding(
+    // Type required enum columns
+    java.lang.Enum.EnumDesc::class
+)
 class DatabaseAutoConfiguration(
     private val prop: R2dbcProperties,
     private val context: ApplicationContext,
@@ -75,6 +76,7 @@ class DatabaseAutoConfiguration(
         tcpNoDelay?.let { builder = builder.tcpNoDelay(it.toBoolean()) }
 
         findFieldsWithAnnotation<PgEnum>().forEach { (field, annotation) ->
+            @Suppress("UNCHECKED_CAST")
             val registrar = buildCodecRegistrar(annotation.name, field.baseType() as Class<out Enum<*>>)
             builder = builder.codecRegistrar(registrar)
         }
@@ -99,7 +101,6 @@ class DatabaseAutoConfiguration(
         }
     }
 
-    @Bean
     override fun getCustomConverters(): List<GenericConverter> {
         val enumConverters = findFieldsWithAnnotation<PgEnum>().map { (field, _) ->
             CustomPostgresEnumConverter(field.baseType())
@@ -114,21 +115,18 @@ class DatabaseAutoConfiguration(
         return enumConverters + jsonConverters + DurationToIntervalConverter() + IntervalToDurationConverter()
     }
 
-    private fun findProjectPackage(): List<String> {
+    override fun getMappingBasePackages(): MutableCollection<String> {
         val candidates = context.getBeansWithAnnotation(SpringBootApplication::class.java)
-        return candidates.map { it.value::class.java.packageName }
+        return candidates.map { it.value::class.java.packageName }.toMutableList().also {
+            logger.info("r2dbc table packages: {}", it)
+        }
     }
 
     private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<Field, T>> {
-        val packages = findProjectPackage()
-
-        val scanner = ClassPathScanningCandidateComponentProvider(false)
-        scanner.addIncludeFilter(AnnotationTypeFilter(Table::class.java))
-        val tables = packages.flatMap { scanner.findCandidateComponents(it) }
+        val tables = r2dbcManagedTypes().toList()
 
         return tables.flatMap {
-            val entityClass = context.classLoader!!.loadClass(it.beanClassName)
-            entityClass.declaredFields.mapNotNull { field ->
+            it.declaredFields.mapNotNull { field ->
                 val annotation = field.getDeclaredAnnotation(T::class.java) ?: return@mapNotNull null
                 field to annotation
             }

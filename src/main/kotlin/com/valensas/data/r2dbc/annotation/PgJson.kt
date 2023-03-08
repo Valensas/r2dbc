@@ -2,4 +2,6 @@ package com.valensas.data.r2dbc.annotation
 
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class PgJson
+annotation class PgJson(
+    val createConverters: Boolean = true
+)

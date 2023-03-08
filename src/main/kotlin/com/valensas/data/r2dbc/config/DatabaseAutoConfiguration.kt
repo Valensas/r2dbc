@@ -8,6 +8,8 @@ import com.valensas.data.r2dbc.converter.CustomPostgresJsonReadingConverter
 import com.valensas.data.r2dbc.converter.CustomPostgresJsonWritingConverter
 import com.valensas.data.r2dbc.converter.DurationToIntervalConverter
 import com.valensas.data.r2dbc.converter.IntervalToDurationConverter
+import com.valensas.data.r2dbc.converter.JsonToMapConverter
+import com.valensas.data.r2dbc.converter.MapToJsonConverter
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
@@ -26,9 +28,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.convert.converter.GenericConverter
+import org.springframework.core.convert.converter.Converter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
+import org.springframework.data.util.CustomCollections
 import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
 
@@ -42,7 +45,8 @@ import java.lang.reflect.ParameterizedType
 class DatabaseAutoConfiguration(
     private val prop: R2dbcProperties,
     private val context: ApplicationContext,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val converters: List<Converter<*, *>>
 ) : AbstractR2dbcConfiguration() {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -101,18 +105,29 @@ class DatabaseAutoConfiguration(
         }
     }
 
-    override fun getCustomConverters(): List<GenericConverter> {
+    override fun getCustomConverters(): List<Any> {
         val enumConverters = findFieldsWithAnnotation<PgEnum>().map { (field, _) ->
             CustomPostgresEnumConverter(field.baseType())
         }
-        val jsonConverters = findFieldsWithAnnotation<PgJson>().map { (field, _) ->
+        val jsonConverters = findFieldsWithAnnotation<PgJson>().filter {
+            it.second.createConverters
+        }.filter {
+            !CustomCollections.isMap(it.first.type)
+        }.map { (field, _) ->
             listOf(
                 CustomPostgresJsonWritingConverter(field.type, objectMapper),
                 CustomPostgresJsonReadingConverter(field, objectMapper)
             )
         }.flatten()
 
-        return enumConverters + jsonConverters + DurationToIntervalConverter() + IntervalToDurationConverter()
+        val jsonToMapConverters = listOf(JsonToMapConverter(objectMapper), MapToJsonConverter(objectMapper))
+
+        return converters +
+            enumConverters +
+            jsonConverters +
+            jsonToMapConverters +
+            DurationToIntervalConverter() +
+            IntervalToDurationConverter()
     }
 
     override fun getMappingBasePackages(): MutableCollection<String> {

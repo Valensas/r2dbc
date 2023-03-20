@@ -138,14 +138,14 @@ class DatabaseAutoConfiguration(
     }
 
     private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<Field, T>> {
-        val tables = r2dbcManagedTypes().toList()
-
-        return tables.flatMap {
-            it.declaredFields.mapNotNull { field ->
-                val annotation = field.getDeclaredAnnotation(T::class.java) ?: return@mapNotNull null
-                field to annotation
+        return r2dbcManagedTypes().toList()
+            .mapNotNull { context.classLoader?.loadClass(it.name) ?: it }
+            .flatMap {
+                it.declaredFields.mapNotNull { field ->
+                    val annotation = field.getDeclaredAnnotation(T::class.java) ?: return@mapNotNull null
+                    field to annotation
+                }
             }
-        }
     }
 
     private fun Field.isCollection(): Boolean {
@@ -159,6 +159,7 @@ class DatabaseAutoConfiguration(
                 check(type.actualTypeArguments.count() == 1) { "Invalid actualTypeArguments count" }
                 type.actualTypeArguments.first() as Class<*>
             }
+
             else -> throw IllegalStateException("Unhandled entity class $type")
         }
     }

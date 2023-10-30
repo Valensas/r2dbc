@@ -92,7 +92,6 @@ class DatabaseAutoConfiguration(
                 ConnectionPoolConfiguration.builder()
                     .connectionFactory(postgresConnection)
                     .initialSize(prop.pool.initialSize)
-                    .minIdle(prop.pool.minIdle)
                     .maxSize(prop.pool.maxSize)
                     .maxAcquireTime(prop.pool.maxAcquireTime)
                     .maxIdleTime(prop.pool.maxIdleTime)

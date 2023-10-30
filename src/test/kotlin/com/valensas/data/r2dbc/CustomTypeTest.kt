@@ -24,38 +24,44 @@ class CustomTypeTest(
     @Autowired
     private val enumEntityRepository: EnumEntityRepository,
     @Autowired
-    private val jsonEntityRepository: JsonEntityRepository
+    private val jsonEntityRepository: JsonEntityRepository,
 ) {
     @BeforeEach
-    fun cleanup(): Unit = runBlocking {
-        enumEntityRepository.deleteAll().awaitFirstOrNull()
-        jsonEntityRepository.deleteAll().awaitFirstOrNull()
-    }
+    fun cleanup(): Unit =
+        runBlocking {
+            enumEntityRepository.deleteAll().awaitFirstOrNull()
+            jsonEntityRepository.deleteAll().awaitFirstOrNull()
+        }
 
     @Test
-    fun canWriteAndReadEnum() = runBlocking {
-        val entity = EnumEntity(
-            type = EnumEntity.Type.Type1
-        )
-        val savedEntity = enumEntityRepository.save(entity).awaitSingle()
-        assertEquals(entity.type, savedEntity.type)
+    fun canWriteAndReadEnum() =
+        runBlocking {
+            val entity =
+                EnumEntity(
+                    type = EnumEntity.Type.Type1,
+                )
+            val savedEntity = enumEntityRepository.save(entity).awaitSingle()
+            assertEquals(entity.type, savedEntity.type)
 
-        val readEntity = enumEntityRepository.findById(savedEntity.id!!).awaitSingle()
-        assertEquals(entity.type, readEntity.type)
-    }
+            val readEntity = enumEntityRepository.findById(savedEntity.id!!).awaitSingle()
+            assertEquals(entity.type, readEntity.type)
+        }
 
     @Test
-    fun canWriteAndReadJson() = runBlocking {
-        val entity = JsonEntity(
-            data = mapOf(
-                "key1" to "value1",
-                "key2" to "value2"
-            )
-        )
-        val savedEntity = jsonEntityRepository.save(entity).awaitSingle()
-        assertEquals(entity.data, savedEntity.data)
+    fun canWriteAndReadJson() =
+        runBlocking {
+            val entity =
+                JsonEntity(
+                    data =
+                        mapOf(
+                            "key1" to "value1",
+                            "key2" to "value2",
+                        ),
+                )
+            val savedEntity = jsonEntityRepository.save(entity).awaitSingle()
+            assertEquals(entity.data, savedEntity.data)
 
-        val readEntity = jsonEntityRepository.findById(savedEntity.id!!).awaitSingle()
-        assertEquals(entity.data, readEntity.data)
-    }
+            val readEntity = jsonEntityRepository.findById(savedEntity.id!!).awaitSingle()
+            assertEquals(entity.data, readEntity.data)
+        }
 }

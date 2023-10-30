@@ -1,4 +1,4 @@
-image: registry.gitlab.com/valensas/tooling/containers/graalvm-static-image:java17-22.3.1
+image: valensas/graalvm-static-image:java21.0.0
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"

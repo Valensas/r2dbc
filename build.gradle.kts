@@ -1,21 +1,21 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "3.0.3"
-    id("io.spring.dependency-management") version "1.1.0"
-    id("org.jmailen.kotlinter") version "3.13.0"
+    id("org.springframework.boot") version "3.1.5"
+    id("io.spring.dependency-management") version "1.1.3"
+    id("org.jmailen.kotlinter") version "4.0.0"
     id("maven-publish")
     id("java-library")
-    kotlin("jvm") version "1.7.22"
-    kotlin("plugin.spring") version "1.7.22"
+    kotlin("jvm") version "1.9.20-Beta2"
+    kotlin("plugin.spring") version "1.9.20-Beta2"
 
-    id("org.graalvm.buildtools.native") version "0.9.20"
-    id("com.github.ben-manes.versions") version "0.46.0"
+    id("org.graalvm.buildtools.native") version "0.9.28"
+    id("com.github.ben-manes.versions") version "0.49.0"
 }
 
 group = "com.valensas.data"
-version = "1.12.0"
-java.sourceCompatibility = JavaVersion.VERSION_17
+version = "1.12.1"
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenCentral()
@@ -55,7 +55,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
@@ -92,5 +92,5 @@ tasks.formatKotlin {
 }
 
 tasks.lintKotlin {
-    setDependsOn(dependsOn - tasks.lintKotlinAot -  tasks.lintKotlinAotTest)
+    setDependsOn(dependsOn - tasks.lintKotlinAot - tasks.lintKotlinAotTest)
 }

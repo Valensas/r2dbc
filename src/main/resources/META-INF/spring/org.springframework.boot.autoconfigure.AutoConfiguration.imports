@@ -1,3 +1,2 @@
 com.valensas.data.r2dbc.config.AuditingAutoConfiguration
 com.valensas.data.r2dbc.config.DatabaseAutoConfiguration
-com.valensas.data.r2dbc.config.ConnectionPoolConfig

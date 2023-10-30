@@ -12,10 +12,10 @@ data class EnumEntity(
     override val updatedBy: String? = null,
     override val updatedDate: Instant? = null,
     @PgEnum("enum_entity_type")
-    val type: Type
+    val type: Type,
 ) : AuditableEntity<Long>(id, createdDate, createdBy, updatedDate, updatedBy) {
     enum class Type {
         Type1,
-        Type2
+        Type2,
     }
 }

@@ -12,7 +12,11 @@ class DurationToIntervalConverter : GenericConverter {
         return setOf(GenericConverter.ConvertiblePair(Duration::class.java, Interval::class.java))
     }
 
-    override fun convert(source: Any?, sourceType: TypeDescriptor, targetType: TypeDescriptor): Any {
+    override fun convert(
+        source: Any?,
+        sourceType: TypeDescriptor,
+        targetType: TypeDescriptor,
+    ): Any {
         return (source as Duration).let { Interval.of(it) }
     }
 }

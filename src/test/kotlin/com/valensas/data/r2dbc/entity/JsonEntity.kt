@@ -10,5 +10,5 @@ data class JsonEntity(
     override val createdDate: Instant? = null,
     override val updatedBy: String? = null,
     override val updatedDate: Instant? = null,
-    val data: Map<String, String>
+    val data: Map<String, String>,
 ) : AuditableEntity<Long>(id, createdDate, createdBy, updatedDate, updatedBy)

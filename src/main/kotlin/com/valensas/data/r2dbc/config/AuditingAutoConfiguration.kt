@@ -19,9 +19,7 @@ import reactor.kotlin.core.publisher.switchIfEmpty
 class AuditingAutoConfiguration {
     @Bean
     @ConditionalOnBean(AuditTextProvider::class)
-    fun auditorAware(
-        auditTextProvider: AuditTextProvider
-    ): ReactiveAuditorAware<String>? {
+    fun auditorAware(auditTextProvider: AuditTextProvider): ReactiveAuditorAware<String>? {
         return ReactiveAuditorAware<String> {
             auditTextProvider.getAuditString()
         }
@@ -31,14 +29,16 @@ class AuditingAutoConfiguration {
     @ConditionalOnMissingBean(AuditTextProvider::class)
     class AuditProvider : AuditTextProvider {
         override fun getAuditString(): Mono<String> {
-            val usernameSubscriber = ReactiveSecurityContextHolder.getContext()
-                .map { it.authentication }
-                .mapNotNull { (it.principal as? OAuth2AuthenticatedPrincipal)?.name }
-                .switchIfEmpty { mono { "anonymous" } }
+            val usernameSubscriber =
+                ReactiveSecurityContextHolder.getContext()
+                    .map { it.authentication }
+                    .mapNotNull { (it.principal as? OAuth2AuthenticatedPrincipal)?.name }
+                    .switchIfEmpty { mono { "anonymous" } }
 
-            val ipSubscriber = Mono.deferContextual { ctx ->
-                mono { ctx.getOrDefault<String>("ClientIp", null) }
-            }.switchIfEmpty { mono { "no-ip" } }
+            val ipSubscriber =
+                Mono.deferContextual { ctx ->
+                    mono { ctx.getOrDefault<String>("ClientIp", null) }
+                }.switchIfEmpty { mono { "no-ip" } }
 
             return Mono.zip(usernameSubscriber, ipSubscriber).map {
                 "${it.t1} - ${it.t2}"

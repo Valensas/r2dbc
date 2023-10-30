@@ -40,13 +40,13 @@ import java.lang.reflect.ParameterizedType
 @EnableConfigurationProperties(R2dbcProperties::class)
 @RegisterReflectionForBinding(
     // Type required enum columns
-    java.lang.Enum.EnumDesc::class
+    java.lang.Enum.EnumDesc::class,
 )
 class DatabaseAutoConfiguration(
     private val prop: R2dbcProperties,
     private val context: ApplicationContext,
     private val objectMapper: ObjectMapper,
-    private val converters: List<Converter<*, *>>
+    private val converters: List<Converter<*, *>>,
 ) : AbstractR2dbcConfiguration() {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -64,12 +64,13 @@ class DatabaseAutoConfiguration(
         val tcpKeepAlive = options.getValue(Option.valueOf<String>("tcpKeepAlive")) as String?
         val tcpNoDelay = options.getValue(Option.valueOf<String>("tcpNoDelay")) as String?
 
-        var builder = PostgresqlConnectionConfiguration.builder()
-            .database(database)
-            .username(prop.username)
-            .password(prop.password)
-            .host(host)
-            .port(port)
+        var builder =
+            PostgresqlConnectionConfiguration.builder()
+                .database(database)
+                .username(prop.username)
+                .password(prop.password)
+                .host(host)
+                .port(port)
 
         preparedStatementCacheQueries?.let { builder = builder.preparedStatementCacheQueries(it.toInt()) }
         sslMode?.let { builder = builder.sslMode(SSLMode.valueOf(it)) }
@@ -87,15 +88,17 @@ class DatabaseAutoConfiguration(
 
         val postgresConnection = PostgresqlConnectionFactory(builder.build())
         return if (prop.pool.isEnabled) {
-            val poolConfig = ConnectionPoolConfiguration.builder()
-                .connectionFactory(postgresConnection)
-                .initialSize(prop.pool.initialSize)
-                .maxSize(prop.pool.maxSize)
-                .maxAcquireTime(prop.pool.maxAcquireTime)
-                .maxIdleTime(prop.pool.maxIdleTime)
-                .maxLifeTime(prop.pool.maxLifeTime)
-                .maxCreateConnectionTime(prop.pool.maxCreateConnectionTime)
-                .validationDepth(prop.pool.validationDepth)
+            val poolConfig =
+                ConnectionPoolConfiguration.builder()
+                    .connectionFactory(postgresConnection)
+                    .initialSize(prop.pool.initialSize)
+                    .minIdle(prop.pool.minIdle)
+                    .maxSize(prop.pool.maxSize)
+                    .maxAcquireTime(prop.pool.maxAcquireTime)
+                    .maxIdleTime(prop.pool.maxIdleTime)
+                    .maxLifeTime(prop.pool.maxLifeTime)
+                    .maxCreateConnectionTime(prop.pool.maxCreateConnectionTime)
+                    .validationDepth(prop.pool.validationDepth)
 
             logger.info("Initializing database pool config {}", poolConfig)
             ConnectionPool(poolConfig.build())
@@ -106,19 +109,21 @@ class DatabaseAutoConfiguration(
     }
 
     override fun getCustomConverters(): List<Any> {
-        val enumConverters = findFieldsWithAnnotation<PgEnum>().map { (field, _) ->
-            CustomPostgresEnumConverter(field.baseType())
-        }
-        val jsonConverters = findFieldsWithAnnotation<PgJson>().filter {
-            it.second.createConverters
-        }.filter {
-            !CustomCollections.isMap(it.first.type)
-        }.map { (field, _) ->
-            listOf(
-                CustomPostgresJsonWritingConverter(field.type, objectMapper),
-                CustomPostgresJsonReadingConverter(field, objectMapper)
-            )
-        }.flatten()
+        val enumConverters =
+            findFieldsWithAnnotation<PgEnum>().map { (field, _) ->
+                CustomPostgresEnumConverter(field.baseType())
+            }
+        val jsonConverters =
+            findFieldsWithAnnotation<PgJson>().filter {
+                it.second.createConverters
+            }.filter {
+                !CustomCollections.isMap(it.first.type)
+            }.map { (field, _) ->
+                listOf(
+                    CustomPostgresJsonWritingConverter(field.type, objectMapper),
+                    CustomPostgresJsonReadingConverter(field, objectMapper),
+                )
+            }.flatten()
 
         val jsonToMapConverters = listOf(JsonToMapConverter(objectMapper), MapToJsonConverter(objectMapper))
 
@@ -172,7 +177,10 @@ class DatabaseAutoConfiguration(
         }
     }
 
-    private fun buildCodecRegistrar(name: String, javaClass: Class<out Enum<*>>): CodecRegistrar {
+    private fun buildCodecRegistrar(
+        name: String,
+        javaClass: Class<out Enum<*>>,
+    ): CodecRegistrar {
         return EnumCodec.builder().withEnum(name, javaClass).build()
     }
 }

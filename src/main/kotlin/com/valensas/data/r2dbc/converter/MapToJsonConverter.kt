@@ -7,9 +7,8 @@ import org.springframework.data.convert.WritingConverter
 
 @WritingConverter
 class MapToJsonConverter(
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : Converter<Map<Any, Any?>, Json> {
-
     override fun convert(source: Map<Any, Any?>): Json {
         return source.let { Json.of(objectMapper.writeValueAsString(it)) }
     }

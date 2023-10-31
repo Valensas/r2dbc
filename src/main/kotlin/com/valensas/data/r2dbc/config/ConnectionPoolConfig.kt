@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
+import reactor.pool.SimpleDequePool
 
 @Configuration
 @EnableScheduling
@@ -29,8 +30,28 @@ class ConnectionPoolConfig(
     fun warmUp() {
         val connectionPool = abstractR2dbcConfiguration.connectionFactory() as? ConnectionPool ?: return
         logger.debug("Database connection pool warm up is triggered.")
-        connectionPool.warmup().subscribe {
-            logger.info("Database connection pool warm up is completed.")
+
+        val connectionPoolField = connectionPool::class.java.getDeclaredField("connectionPool")
+        connectionPoolField.isAccessible = true
+        val pool = connectionPoolField.get(connectionPool) as SimpleDequePool<*>
+        val allocationStrategy = pool.config().allocationStrategy()
+        val currentConnections = allocationStrategy.permitGranted()
+        val minIdleCount = allocationStrategy.permitMinimum()
+        if (currentConnections < minIdleCount) {
+            logger.info(
+                "Current connection count: {} is less than {}. Warmup required.",
+                currentConnections,
+                minIdleCount,
+            )
+            connectionPool.warmup().subscribe {
+                logger.info("Database connection pool warm up is completed.")
+            }
+        } else {
+            logger.debug(
+                "Current connection count: {} is qe than {}. Warmup not required.",
+                currentConnections,
+                minIdleCount,
+            )
         }
     }
 }

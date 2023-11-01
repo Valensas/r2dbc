@@ -24,7 +24,7 @@ class ConnectionPoolConfig(
     }
 
     @Scheduled(
-        fixedDelayString = "\${spring.r2dbc.pool.warmup.fixedDelay:300000}",
+        fixedDelayString = "\${spring.r2dbc.pool.warmup.fixedDelay:60000}",
         initialDelayString = "\${spring.r2dbc.pool.warmup.initialDelay:600000}",
     )
     fun warmUp() {

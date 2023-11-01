@@ -5,7 +5,7 @@
       "name": "spring.r2dbc.pool.warmup.fixedDelay",
       "description": "The millisecond value of the time between connection pool warmup jobs.",
       "type": "java.lang.Integer",
-      "defaultValue": 300000
+      "defaultValue": 60000
     },
     {
       "name": "spring.r2dbc.pool.warmup.initialDelay",

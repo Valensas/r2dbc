@@ -12,9 +12,13 @@ class RuntimeHintsRegistrar : RuntimeHintsRegistrar {
         hints: RuntimeHints,
         classLoader: ClassLoader?,
     ) {
+        val clazz = classLoader?.loadClass("io.r2dbc.pool.ConnectionPool") ?: return
+        val connectionPoolField = clazz.getDeclaredField("connectionPool")
+
         hints.reflection()
             .registerType(OffsetDateTime::class.java)
             .registerType(ConnectionPool::class.java)
             .registerMethod(OffsetDateTime::toInstant.javaMethod!!, ExecutableMode.INVOKE)
+            .registerField(connectionPoolField)
     }
 }

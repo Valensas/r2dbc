@@ -1,16 +1,16 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "3.1.5"
-    id("io.spring.dependency-management") version "1.1.3"
-    id("org.jmailen.kotlinter") version "4.0.0"
+    id("org.springframework.boot") version "3.2.0"
+    id("io.spring.dependency-management") version "1.1.4"
+    id("org.jmailen.kotlinter") version "4.1.0"
     id("maven-publish")
     id("java-library")
-    kotlin("jvm") version "1.9.20-Beta2"
-    kotlin("plugin.spring") version "1.9.20-Beta2"
+    kotlin("jvm") version "1.9.21"
+    kotlin("plugin.spring") version "1.9.21"
 
     id("org.graalvm.buildtools.native") version "0.9.28"
-    id("com.github.ben-manes.versions") version "0.49.0"
+    id("com.github.ben-manes.versions") version "0.50.0"
 }
 
 group = "com.valensas.data"
@@ -45,11 +45,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 
+
     compileOnly("org.springframework.security:spring-security-oauth2-core")
 
     testImplementation("org.flywaydb:flyway-core")
     testRuntimeOnly("org.postgresql:postgresql")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-oauth2-core")
 }
 
 tasks.withType<KotlinCompile> {
@@ -93,4 +96,10 @@ tasks.formatKotlin {
 
 tasks.lintKotlin {
     setDependsOn(dependsOn - tasks.lintKotlinAot - tasks.lintKotlinAotTest)
+}
+
+graalvmNative {
+    binaries.all {
+        buildArgs.add("--initialize-at-build-time=kotlin.annotation.AnnotationTarget,kotlin.annotation.AnnotationRetention")
+    }
 }

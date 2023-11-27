@@ -8,23 +8,29 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.reactive.server.WebTestClient
 
 @SpringBootTest
 @ActiveProfiles("test")
+@AutoConfigureWebTestClient
 @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CustomTypeTest(
+class DatabaseTest(
     @Autowired
     private val enumEntityRepository: EnumEntityRepository,
     @Autowired
     private val jsonEntityRepository: JsonEntityRepository,
+    @Autowired
+    private val webTestClient: WebTestClient,
 ) {
     @BeforeEach
     fun cleanup(): Unit =
@@ -64,4 +70,19 @@ class CustomTypeTest(
             val readEntity = jsonEntityRepository.findById(savedEntity.id!!).awaitSingle()
             assertEquals(entity.data, readEntity.data)
         }
+
+    @Test
+    fun canAudit() {
+        val response =
+            webTestClient
+                .post().uri("/")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful
+                .expectBody(EnumEntity::class.java)
+                .returnResult().responseBody!!
+
+        assertNotNull(response.createdBy)
+        assertNotNull(response.createdDate)
+    }
 }

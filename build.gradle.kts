@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.valensas.data"
-version = "1.12.7"
+version = "1.12.8"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {

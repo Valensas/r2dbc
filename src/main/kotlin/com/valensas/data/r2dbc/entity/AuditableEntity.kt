@@ -8,7 +8,7 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.relational.core.mapping.InsertOnlyProperty
 import java.time.Instant
 
-open class AuditableEntity<T>(
+open class AuditableEntity<T, A>(
     @Id
     open val id: T? = null,
     @CreatedDate
@@ -16,9 +16,9 @@ open class AuditableEntity<T>(
     open val createdDate: Instant? = null,
     @CreatedBy
     @InsertOnlyProperty
-    open val createdBy: String? = null,
+    open val createdBy: A? = null,
     @LastModifiedDate
     open val updatedDate: Instant? = null,
     @LastModifiedBy
-    open val updatedBy: String? = null,
+    open val updatedBy: A? = null,
 )

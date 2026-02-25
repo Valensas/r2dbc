@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "3.2.0"
     id("io.spring.dependency-management") version "1.1.4"
     id("org.jmailen.kotlinter") version "4.1.0"
     id("maven-publish")
@@ -45,6 +44,12 @@ tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
         jvmTarget = "21"
+    }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.2.0")
     }
 }
 
@@ -101,13 +106,6 @@ centralPortal {
     }
 }
 
-tasks.formatKotlin {
-    setDependsOn(dependsOn - tasks.formatKotlinAot - tasks.formatKotlinAotTest)
-}
-
-tasks.lintKotlin {
-    setDependsOn(dependsOn - tasks.lintKotlinAot - tasks.lintKotlinAotTest)
-}
 
 graalvmNative {
     binaries.all {

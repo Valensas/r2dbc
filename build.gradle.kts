@@ -11,28 +11,14 @@ plugins {
 
     id("org.graalvm.buildtools.native") version "0.9.28"
     id("com.github.ben-manes.versions") version "0.50.0"
+    id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
 }
 
 group = "com.valensas.data"
-version = "1.13.0"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenCentral()
-    if (project.hasProperty("GITLAB_REPO_URL")) {
-        maven {
-            name = "Gitlab"
-            url = uri(project.property("GITLAB_REPO_URL").toString())
-            credentials(HttpHeaderCredentials::class.java) {
-                name = project.findProperty("GITLAB_TOKEN_NAME")?.toString()
-                value = project.findProperty("GITLAB_TOKEN")?.toString()
-            }
-            authentication {
-                create("header", HttpHeaderAuthentication::class)
-            }
-        }
-    }
-    mavenLocal()
 }
 
 dependencies {
@@ -67,25 +53,50 @@ tasks.withType<Test> {
 }
 
 publishing {
-    repositories {
-        if (System.getenv("CI_API_V4_URL") != null) {
-            maven {
-                name = "Gitlab"
-                url = uri("${System.getenv("CI_API_V4_URL")}/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
-                credentials(HttpHeaderCredentials::class.java) {
-                    name = "Job-Token"
-                    value = System.getenv("CI_JOB_TOKEN")
-                }
-                authentication {
-                    create("header", HttpHeaderAuthentication::class)
-                }
-            }
+    publications {
+        create("library", MavenPublication::class.java) {
+            artifactId = "r2dbc"
+            from(components["java"])
         }
     }
+    repositories {
+        mavenLocal()
+    }
+}
 
-    publications {
-        create<MavenPublication>("artifact") {
-            from(components["java"])
+signing {
+    val keyId = System.getenv("SIGNING_KEYID")
+    val secretKey = System.getenv("SIGNING_SECRETKEY")
+    val passphrase = System.getenv("SIGNING_PASSPHRASE")
+
+    useInMemoryPgpKeys(keyId, secretKey, passphrase)
+}
+
+centralPortal {
+    name = "r2dbc"
+    username = System.getenv("SONATYPE_USERNAME")
+    password = System.getenv("SONATYPE_PASSWORD")
+    pom {
+        name = "R2DBC"
+        description = "A reactive R2DBC library for Spring Boot."
+        url = "https://valensas.com/"
+        scm {
+            url = "https://github.com/Valensas/r2dbc"
+        }
+
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://mit-license.org")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("0")
+                name.set("Valensas")
+                email.set("info@valensas.com")
+            }
         }
     }
 }

@@ -11,5 +11,5 @@ open class BaseEntity<T>(
     @CreatedDate
     open val createdDate: Instant? = null,
     @LastModifiedDate
-    open val updatedDate: Instant? = null,
+    open val updatedDate: Instant? = null
 )

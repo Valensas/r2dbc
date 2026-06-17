@@ -8,7 +8,7 @@ import org.springframework.data.convert.ReadingConverter
 
 @ReadingConverter
 class JsonToMapConverter(
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: ObjectMapper
 ) : Converter<Json, Map<Any, Any?>> {
     override fun convert(source: Json): Map<Any, Any?>? {
         val typeRef: TypeReference<Map<Any, Any?>> = object : TypeReference<Map<Any, Any?>>() {}

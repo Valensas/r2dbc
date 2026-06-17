@@ -10,7 +10,7 @@ import kotlin.reflect.jvm.javaMethod
 class RuntimeHintsRegistrar : RuntimeHintsRegistrar {
     override fun registerHints(
         hints: RuntimeHints,
-        classLoader: ClassLoader?,
+        classLoader: ClassLoader?
     ) {
         hints
             .reflection()

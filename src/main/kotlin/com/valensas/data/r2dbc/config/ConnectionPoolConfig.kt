@@ -15,7 +15,7 @@ import reactor.pool.SimpleDequePool
 @AutoConfigureAfter(DatabaseAutoConfiguration::class)
 @ConditionalOnProperty("spring.r2dbc.pool.enabled", havingValue = "true", matchIfMissing = true)
 class ConnectionPoolConfig(
-    private val abstractR2dbcConfiguration: AbstractR2dbcConfiguration,
+    private val abstractR2dbcConfiguration: AbstractR2dbcConfiguration
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -25,7 +25,7 @@ class ConnectionPoolConfig(
 
     @Scheduled(
         fixedDelayString = "\${spring.r2dbc.pool.warmup.fixedDelay:60000}",
-        initialDelayString = "\${spring.r2dbc.pool.warmup.initialDelay:600000}",
+        initialDelayString = "\${spring.r2dbc.pool.warmup.initialDelay:600000}"
     )
     fun warmUp() {
         val connectionPool = abstractR2dbcConfiguration.connectionFactory() as? ConnectionPool ?: return
@@ -41,7 +41,7 @@ class ConnectionPoolConfig(
             logger.info(
                 "Current connection count: {} is less than {}. Warmup required.",
                 currentConnections,
-                minIdleCount,
+                minIdleCount
             )
             connectionPool.warmup().subscribe {
                 logger.info("Database connection pool warm up is completed.")
@@ -50,7 +50,7 @@ class ConnectionPoolConfig(
             logger.debug(
                 "Current connection count: {} is qe than {}. Warmup not required.",
                 currentConnections,
-                minIdleCount,
+                minIdleCount
             )
         }
     }

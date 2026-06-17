@@ -14,5 +14,5 @@ data class JsonEntity(
     @PgJson
     override val updatedBy: Audit? = null,
     override val updatedDate: Instant? = null,
-    val data: Map<String, String>,
+    val data: Map<String, String>
 ) : AuditableEntity<Long, Audit>(id, createdDate, createdBy, updatedDate, updatedBy)

@@ -51,7 +51,7 @@ class AuditingAutoConfiguration {
 @ConditionalOnBean(ReactiveAuditorAware::class, ReactiveAuditingHandler::class)
 class AuditingPatchAutoConfiguration(
     private val auditorAware: ReactiveAuditorAware<*>,
-    private val auditHandler: ReactiveAuditingHandler,
+    private val auditHandler: ReactiveAuditingHandler
 ) {
     @PostConstruct
     fun patch() {

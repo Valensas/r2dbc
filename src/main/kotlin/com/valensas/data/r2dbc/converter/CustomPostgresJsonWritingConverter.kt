@@ -9,14 +9,13 @@ import org.springframework.data.convert.WritingConverter
 @WritingConverter
 class CustomPostgresJsonWritingConverter(
     private val type: Class<*>,
-    private val objectMapper: ObjectMapper,
+    private val objectMapper: ObjectMapper
 ) : GenericConverter {
-    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> =
-        setOf(GenericConverter.ConvertiblePair(type, Json::class.java))
+    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> = setOf(GenericConverter.ConvertiblePair(type, Json::class.java))
 
     override fun convert(
         source: Any?,
         sourceType: TypeDescriptor,
-        targetType: TypeDescriptor,
+        targetType: TypeDescriptor
     ): Any? = source?.let { Json.of(objectMapper.writeValueAsString(it)) }
 }

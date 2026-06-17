@@ -8,12 +8,11 @@ import java.time.Duration
 
 @WritingConverter
 class DurationToIntervalConverter : GenericConverter {
-    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> =
-        setOf(GenericConverter.ConvertiblePair(Duration::class.java, Interval::class.java))
+    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> = setOf(GenericConverter.ConvertiblePair(Duration::class.java, Interval::class.java))
 
     override fun convert(
         source: Any?,
         sourceType: TypeDescriptor,
-        targetType: TypeDescriptor,
+        targetType: TypeDescriptor
     ): Any = (source as Duration).let { Interval.of(it) }
 }

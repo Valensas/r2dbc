@@ -41,14 +41,14 @@ import java.lang.reflect.ParameterizedType
 @EnableConfigurationProperties(R2dbcProperties::class)
 @RegisterReflectionForBinding(
     // Type required enum columns
-    java.lang.Enum.EnumDesc::class,
+    java.lang.Enum.EnumDesc::class
 )
 @ImportRuntimeHints(RuntimeHintsRegistrar::class)
 class DatabaseAutoConfiguration(
     private val prop: R2dbcProperties,
     private val context: ApplicationContext,
     private val objectMapper: ObjectMapper,
-    private val converters: List<Converter<*, *>>,
+    private val converters: List<Converter<*, *>>
 ) : AbstractR2dbcConfiguration() {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -125,7 +125,7 @@ class DatabaseAutoConfiguration(
                 }.map { (field, _) ->
                     listOf(
                         CustomPostgresJsonWritingConverter(field.type, objectMapper),
-                        CustomPostgresJsonReadingConverter(field, objectMapper),
+                        CustomPostgresJsonReadingConverter(field, objectMapper)
                     )
                 }.flatten()
 
@@ -160,31 +160,29 @@ class DatabaseAutoConfiguration(
 
     private fun Field.isCollection(): Boolean = Collection::class.java.isAssignableFrom(this.type)
 
-    private fun Field.elementType(): Class<*> =
-        when (val type = this.genericType) {
-            is Class<*> -> {
-                type.componentType
-            }
-
-            is ParameterizedType -> {
-                check(type.actualTypeArguments.count() == 1) { "Invalid actualTypeArguments count" }
-                type.actualTypeArguments.first() as Class<*>
-            }
-
-            else -> {
-                throw IllegalStateException("Unhandled entity class $type")
-            }
+    private fun Field.elementType(): Class<*> = when (val type = this.genericType) {
+        is Class<*> -> {
+            type.componentType
         }
 
-    private fun Field.baseType(): Class<*> =
-        if (this.isCollection()) {
-            this.elementType()
-        } else {
-            this.type
+        is ParameterizedType -> {
+            check(type.actualTypeArguments.count() == 1) { "Invalid actualTypeArguments count" }
+            type.actualTypeArguments.first() as Class<*>
         }
+
+        else -> {
+            throw IllegalStateException("Unhandled entity class $type")
+        }
+    }
+
+    private fun Field.baseType(): Class<*> = if (this.isCollection()) {
+        this.elementType()
+    } else {
+        this.type
+    }
 
     private fun buildCodecRegistrar(
         name: String,
-        javaClass: Class<out Enum<*>>,
+        javaClass: Class<out Enum<*>>
     ): CodecRegistrar = EnumCodec.builder().withEnum(name, javaClass).build()
 }

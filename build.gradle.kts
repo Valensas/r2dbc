@@ -10,7 +10,7 @@ plugins {
     kotlin("plugin.spring") version "2.4.0"
 
     id("org.graalvm.buildtools.native") version "0.9.28"
-    id("com.github.ben-manes.versions") version "0.50.0"
+    id("com.github.ben-manes.versions") version "0.54.0"
     id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
 }
 

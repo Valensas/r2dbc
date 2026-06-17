@@ -8,18 +8,17 @@ import java.time.Duration
 
 @ReadingConverter
 class IntervalToDurationConverter : GenericConverter {
-    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> {
-        return setOf(GenericConverter.ConvertiblePair(Interval::class.java, Duration::class.java))
-    }
+    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> = setOf(GenericConverter.ConvertiblePair(Interval::class.java, Duration::class.java))
 
     override fun convert(
         source: Any?,
         sourceType: TypeDescriptor,
-        targetType: TypeDescriptor,
+        targetType: TypeDescriptor
     ): Any {
         val days = (source as Interval).years * 365 + (source.months * 30) + (source.days)
 
-        return Duration.ofDays(days.toLong())
+        return Duration
+            .ofDays(days.toLong())
             .plusHours(source.hours.toLong())
             .plusMinutes(source.minutes.toLong())
             .plusNanos((source.seconds * 1000000000L).toLong())

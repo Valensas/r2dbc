@@ -10,11 +10,9 @@ import java.net.InetAddress
 @Configuration
 class TestAuditConfiguration {
     @Bean
-    fun auditProvider(): ReactiveAuditorAware<Audit> {
-        return ReactiveAuditorAware {
-            mono {
-                Audit("username", InetAddress.getLocalHost())
-            }
+    fun auditProvider(): ReactiveAuditorAware<Audit> = ReactiveAuditorAware {
+        mono {
+            Audit("username", InetAddress.getLocalHost())
         }
     }
 }

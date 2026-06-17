@@ -12,13 +12,13 @@ class TestApplication
 
 @RestController
 class TestController(
-    private val enumEntityRepository: EnumEntityRepository,
+    private val enumEntityRepository: EnumEntityRepository
 ) {
     @PostMapping("/")
     fun test(): Mono<EnumEntity> {
         val entity =
             EnumEntity(
-                type = EnumEntity.Type.Type1,
+                type = EnumEntity.Type.Type1
             )
         return enumEntityRepository.save(entity)
     }

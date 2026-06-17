@@ -10,9 +10,10 @@ import kotlin.reflect.jvm.javaMethod
 class RuntimeHintsRegistrar : RuntimeHintsRegistrar {
     override fun registerHints(
         hints: RuntimeHints,
-        classLoader: ClassLoader?,
+        classLoader: ClassLoader?
     ) {
-        hints.reflection()
+        hints
+            .reflection()
             // Required for Instant column types
             .registerType(OffsetDateTime::class.java)
             .registerMethod(OffsetDateTime::toInstant.javaMethod!!, ExecutableMode.INVOKE)

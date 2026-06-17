@@ -6,17 +6,13 @@ import org.springframework.data.convert.WritingConverter
 
 @WritingConverter
 class CustomPostgresEnumConverter(
-    private val type: Class<*>,
+    private val type: Class<*>
 ) : GenericConverter {
-    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> {
-        return setOf(GenericConverter.ConvertiblePair(type, type))
-    }
+    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> = setOf(GenericConverter.ConvertiblePair(type, type))
 
     override fun convert(
         source: Any?,
         sourceType: TypeDescriptor,
-        targetType: TypeDescriptor,
-    ): Any? {
-        return source
-    }
+        targetType: TypeDescriptor
+    ): Any? = source
 }

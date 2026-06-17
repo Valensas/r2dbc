@@ -4,5 +4,5 @@ import java.net.InetAddress
 
 data class Audit(
     val username: String,
-    val ip: InetAddress,
+    val ip: InetAddress
 )

@@ -19,9 +19,7 @@ import reactor.kotlin.core.publisher.switchIfEmpty
 class AuditingAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(ReactiveAuditorAware::class)
-    fun auditProvider(): ReactiveAuditorAware<String> {
-        return AuditProvider()
-    }
+    fun auditProvider(): ReactiveAuditorAware<String> = AuditProvider()
 
     class AuditProvider : ReactiveAuditorAware<String> {
         override fun getCurrentAuditor(): Mono<String> {
@@ -32,9 +30,10 @@ class AuditingAutoConfiguration {
                     .switchIfEmpty { mono { "anonymous" } }
 
             val ipSubscriber =
-                Mono.deferContextual { ctx ->
-                    mono { ctx.getOrDefault<String>("ClientIp", null) }
-                }.switchIfEmpty { mono { "no-ip" } }
+                Mono
+                    .deferContextual { ctx ->
+                        mono { ctx.getOrDefault<String>("ClientIp", null) }
+                    }.switchIfEmpty { mono { "no-ip" } }
 
             return Mono.zip(usernameSubscriber, ipSubscriber).map {
                 "${it.t1} - ${it.t2}"

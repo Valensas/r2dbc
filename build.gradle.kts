@@ -1,12 +1,13 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("io.spring.dependency-management") version "1.1.4"
-    id("org.jmailen.kotlinter") version "4.1.0"
+    id("io.spring.dependency-management") version "1.1.7"
+    id("org.jmailen.kotlinter") version "5.5.0"
     id("maven-publish")
     id("java-library")
-    kotlin("jvm") version "1.9.21"
-    kotlin("plugin.spring") version "1.9.21"
+    kotlin("jvm") version "2.4.0"
+    kotlin("plugin.spring") version "2.4.0"
 
     id("org.graalvm.buildtools.native") version "0.9.28"
     id("com.github.ben-manes.versions") version "0.50.0"
@@ -34,28 +35,33 @@ dependencies {
     compileOnly("org.springframework.security:spring-security-oauth2-core")
 
     testImplementation("org.flywaydb:flyway-core")
+    testImplementation("org.flywaydb:flyway-database-postgresql")
+
     testRuntimeOnly("org.postgresql:postgresql")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-oauth2-core")
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "21"
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xjsr305=strict")
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.2.0")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.15")
     }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+extra["kotlin.version"] = "2.4.0"
 
 publishing {
     publications {

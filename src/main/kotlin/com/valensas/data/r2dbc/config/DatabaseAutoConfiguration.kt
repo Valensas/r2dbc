@@ -67,7 +67,8 @@ class DatabaseAutoConfiguration(
         val tcpNoDelay = options.getValue(Option.valueOf<String>("tcpNoDelay")) as String?
 
         var builder =
-            PostgresqlConnectionConfiguration.builder()
+            PostgresqlConnectionConfiguration
+                .builder()
                 .database(database)
                 .username(prop.username)
                 .password(prop.password)
@@ -91,7 +92,8 @@ class DatabaseAutoConfiguration(
         val postgresConnection = PostgresqlConnectionFactory(builder.build())
         return if (prop.pool.isEnabled) {
             val poolConfig =
-                ConnectionPoolConfiguration.builder()
+                ConnectionPoolConfiguration
+                    .builder()
                     .connectionFactory(postgresConnection)
                     .initialSize(prop.pool.initialSize)
                     .maxSize(prop.pool.maxSize)
@@ -115,16 +117,17 @@ class DatabaseAutoConfiguration(
                 CustomPostgresEnumConverter(field.baseType())
             }
         val jsonConverters =
-            findFieldsWithAnnotation<PgJson>().filter {
-                it.second.createConverters
-            }.filter {
-                !CustomCollections.isMap(it.first.type)
-            }.map { (field, _) ->
-                listOf(
-                    CustomPostgresJsonWritingConverter(field.type, objectMapper),
-                    CustomPostgresJsonReadingConverter(field, objectMapper),
-                )
-            }.flatten()
+            findFieldsWithAnnotation<PgJson>()
+                .filter {
+                    it.second.createConverters
+                }.filter {
+                    !CustomCollections.isMap(it.first.type)
+                }.map { (field, _) ->
+                    listOf(
+                        CustomPostgresJsonWritingConverter(field.type, objectMapper),
+                        CustomPostgresJsonReadingConverter(field, objectMapper),
+                    )
+                }.flatten()
 
         val jsonToMapConverters = listOf(JsonToMapConverter(objectMapper), MapToJsonConverter(objectMapper))
 
@@ -144,7 +147,8 @@ class DatabaseAutoConfiguration(
     }
 
     private inline fun <reified T : Annotation> findFieldsWithAnnotation(): List<Pair<Field, T>> {
-        return r2dbcManagedTypes().toList()
+        return r2dbcManagedTypes()
+            .toList()
             .mapNotNull { context.classLoader?.loadClass(it.name) ?: it }
             .flatMap {
                 it.declaredFields.mapNotNull { field ->
@@ -154,34 +158,33 @@ class DatabaseAutoConfiguration(
             }
     }
 
-    private fun Field.isCollection(): Boolean {
-        return Collection::class.java.isAssignableFrom(this.type)
-    }
+    private fun Field.isCollection(): Boolean = Collection::class.java.isAssignableFrom(this.type)
 
-    private fun Field.elementType(): Class<*> {
-        return when (val type = this.genericType) {
-            is Class<*> -> type.componentType
+    private fun Field.elementType(): Class<*> =
+        when (val type = this.genericType) {
+            is Class<*> -> {
+                type.componentType
+            }
+
             is ParameterizedType -> {
                 check(type.actualTypeArguments.count() == 1) { "Invalid actualTypeArguments count" }
                 type.actualTypeArguments.first() as Class<*>
             }
 
-            else -> throw IllegalStateException("Unhandled entity class $type")
+            else -> {
+                throw IllegalStateException("Unhandled entity class $type")
+            }
         }
-    }
 
-    private fun Field.baseType(): Class<*> {
-        return if (this.isCollection()) {
+    private fun Field.baseType(): Class<*> =
+        if (this.isCollection()) {
             this.elementType()
         } else {
             this.type
         }
-    }
 
     private fun buildCodecRegistrar(
         name: String,
         javaClass: Class<out Enum<*>>,
-    ): CodecRegistrar {
-        return EnumCodec.builder().withEnum(name, javaClass).build()
-    }
+    ): CodecRegistrar = EnumCodec.builder().withEnum(name, javaClass).build()
 }

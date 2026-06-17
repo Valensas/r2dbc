@@ -12,15 +12,12 @@ class CustomPostgresJsonReadingConverter(
     private val field: Field,
     private val objectMapper: ObjectMapper,
 ) : GenericConverter {
-    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> {
-        return setOf(GenericConverter.ConvertiblePair(Json::class.java, field.type))
-    }
+    override fun getConvertibleTypes(): Set<GenericConverter.ConvertiblePair> =
+        setOf(GenericConverter.ConvertiblePair(Json::class.java, field.type))
 
     override fun convert(
         source: Any?,
         sourceType: TypeDescriptor,
         targetType: TypeDescriptor,
-    ): Any? {
-        return objectMapper.readValue((source as Json).asArray(), objectMapper.typeFactory.constructType(field.genericType))
-    }
+    ): Any? = objectMapper.readValue((source as Json).asArray(), objectMapper.typeFactory.constructType(field.genericType))
 }

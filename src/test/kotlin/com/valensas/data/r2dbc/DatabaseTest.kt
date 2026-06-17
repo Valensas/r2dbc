@@ -75,12 +75,14 @@ class DatabaseTest(
     fun canAudit() {
         val response =
             webTestClient
-                .post().uri("/")
+                .post()
+                .uri("/")
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful
                 .expectBody(EnumEntity::class.java)
-                .returnResult().responseBody!!
+                .returnResult()
+                .responseBody!!
 
         assertNotNull(response.createdBy)
         assertNotNull(response.createdDate)

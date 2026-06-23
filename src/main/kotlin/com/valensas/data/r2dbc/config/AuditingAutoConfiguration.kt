@@ -26,7 +26,7 @@ class AuditingAutoConfiguration {
             val usernameSubscriber =
                 ReactiveSecurityContextHolder
                     .getContext()
-                    .mapNotNull { (it.authentication.principal as? OAuth2AuthenticatedPrincipal)?.name }
+                    .mapNotNull { (it.authentication?.principal as? OAuth2AuthenticatedPrincipal)?.name }
                     .switchIfEmpty { mono { "anonymous" } }
 
             val ipSubscriber =

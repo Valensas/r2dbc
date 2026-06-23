@@ -1,10 +1,10 @@
 package com.valensas.data.r2dbc.converter
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.r2dbc.postgresql.codec.Json
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.GenericConverter
 import org.springframework.data.convert.ReadingConverter
+import tools.jackson.databind.ObjectMapper
 import java.lang.reflect.Field
 
 @ReadingConverter

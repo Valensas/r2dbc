@@ -9,7 +9,7 @@ plugins {
     kotlin("jvm") version "2.4.0"
     kotlin("plugin.spring") version "2.4.0"
 
-    id("org.graalvm.buildtools.native") version "0.9.28"
+    id("org.graalvm.buildtools.native") version "1.1.2"
     id("com.github.ben-manes.versions") version "0.54.0"
     id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
 }
@@ -25,7 +25,7 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-data-r2dbc")
     api("org.postgresql:r2dbc-postgresql")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
@@ -34,6 +34,7 @@ dependencies {
 
     compileOnly("org.springframework.security:spring-security-oauth2-core")
 
+    testImplementation("org.springframework.boot:spring-boot-flyway")
     testImplementation("org.flywaydb:flyway-core")
     testImplementation("org.flywaydb:flyway-database-postgresql")
 
@@ -41,6 +42,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-webtestclient")
     testImplementation("org.springframework.security:spring-security-oauth2-core")
 }
 
@@ -53,7 +55,7 @@ tasks.withType<KotlinCompile> {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.15")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.0")
     }
 }
 

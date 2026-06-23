@@ -34,6 +34,7 @@ dependencies {
 
     compileOnly("org.springframework.security:spring-security-oauth2-core")
 
+    testImplementation("org.springframework.boot:spring-boot-flyway")
     testImplementation("org.flywaydb:flyway-core")
     testImplementation("org.flywaydb:flyway-database-postgresql")
 

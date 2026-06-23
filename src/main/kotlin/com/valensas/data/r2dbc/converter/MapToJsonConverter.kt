@@ -1,9 +1,9 @@
 package com.valensas.data.r2dbc.converter
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.r2dbc.postgresql.codec.Json
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.convert.WritingConverter
+import tools.jackson.databind.ObjectMapper
 
 @WritingConverter
 class MapToJsonConverter(

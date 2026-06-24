@@ -1,6 +1,5 @@
 package com.valensas.data.r2dbc.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.data.r2dbc.annotation.PgEnum
 import com.valensas.data.r2dbc.annotation.PgJson
 import com.valensas.data.r2dbc.converter.CustomPostgresEnumConverter
@@ -23,16 +22,17 @@ import io.r2dbc.spi.Option
 import org.slf4j.LoggerFactory
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.autoconfigure.r2dbc.R2dbcProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.r2dbc.autoconfigure.R2dbcProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.ImportRuntimeHints
 import org.springframework.core.convert.converter.Converter
+import org.springframework.data.core.CustomCollections
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
-import org.springframework.data.util.CustomCollections
+import tools.jackson.databind.ObjectMapper
 import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
 
@@ -54,7 +54,7 @@ class DatabaseAutoConfiguration(
 
     @Bean
     override fun connectionFactory(): ConnectionFactory {
-        val options = ConnectionFactoryOptions.parse(prop.url)
+        val options = ConnectionFactoryOptions.parse(requireNotNull(prop.url) { "spring.r2dbc.url must be set" })
         val host = options.getValue(Option.valueOf<String>("host")) as String
         val port = options.getValue(Option.valueOf<String>("port")) as Int
         val database = options.getValue(Option.valueOf<String>("database")) as String
@@ -70,7 +70,7 @@ class DatabaseAutoConfiguration(
             PostgresqlConnectionConfiguration
                 .builder()
                 .database(database)
-                .username(prop.username)
+                .username(requireNotNull(prop.username) { "spring.r2dbc.username must be set" })
                 .password(prop.password)
                 .host(host)
                 .port(port)
@@ -99,7 +99,7 @@ class DatabaseAutoConfiguration(
                     .maxSize(prop.pool.maxSize)
                     .maxAcquireTime(prop.pool.maxAcquireTime)
                     .maxIdleTime(prop.pool.maxIdleTime)
-                    .maxLifeTime(prop.pool.maxLifeTime)
+                    .apply { prop.pool.maxLifeTime?.let { maxLifeTime(it) } }
                     .maxCreateConnectionTime(prop.pool.maxCreateConnectionTime)
                     .validationDepth(prop.pool.validationDepth)
 

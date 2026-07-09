@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.ImportRuntimeHints
 import org.springframework.core.convert.converter.Converter
+import org.springframework.data.convert.ReadingConverter
+import org.springframework.data.convert.WritingConverter
 import org.springframework.data.core.CustomCollections
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
@@ -131,7 +133,14 @@ class DatabaseAutoConfiguration(
 
         val jsonToMapConverters = listOf(JsonToMapConverter(objectMapper), MapToJsonConverter(objectMapper))
 
-        return converters +
+        val userConverters =
+            converters.filter { converter ->
+                val type = converter::class.java
+                type.isAnnotationPresent(ReadingConverter::class.java) ||
+                    type.isAnnotationPresent(WritingConverter::class.java)
+            }
+
+        return userConverters +
             enumConverters +
             jsonConverters +
             jsonToMapConverters +

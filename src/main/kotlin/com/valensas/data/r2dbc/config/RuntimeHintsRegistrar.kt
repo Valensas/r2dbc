@@ -4,6 +4,8 @@ import io.r2dbc.pool.ConnectionPool
 import org.springframework.aot.hint.ExecutableMode
 import org.springframework.aot.hint.RuntimeHints
 import org.springframework.aot.hint.RuntimeHintsRegistrar
+import org.springframework.data.convert.ReadingConverter
+import org.springframework.data.convert.WritingConverter
 import java.time.OffsetDateTime
 import kotlin.reflect.jvm.javaMethod
 
@@ -20,5 +22,7 @@ class RuntimeHintsRegistrar : RuntimeHintsRegistrar {
             // Required for connection pool warm-up
             .registerType(ConnectionPool::class.java)
             .registerField(ConnectionPool::class.java.getDeclaredField("connectionPool"))
+            .registerType(ReadingConverter::class.java)
+            .registerType(WritingConverter::class.java)
     }
 }
